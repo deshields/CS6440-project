@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-px8^w@4bm7&$1y*&r+kx9nc*q3hrsb_%6161(^z(uy&wb*5k4^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["http://localhost:15001"]
+ALLOWED_HOSTS = ["*", "localhost"]
 
 
 # Application definition
@@ -37,24 +37,41 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_react',
+    'rest_framework',
+    'corsheaders',
+    'webpack_loader',
 ]
+
+WEBPACK_LOADER = {
+    "DEFAULT": {
+        "BUNDLE_DIR_NAME": "hd/bundles/",
+        "STATS_FILE": BASE_DIR / "webpack-stats.json"
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
-ROOT_URLCONF = 'backend.urls'
+CORS_ORIGIN_WHITELIST = [
+     'http://localhost:15001'
+]
+
+ROOT_URLCONF = 'django_react.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,11 +93,10 @@ WSGI_APPLICATION = 'django_react.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydatabase',
-        'USER': 'mydatabaseuser',
-        'PASSWORD': 'mypassword',
-        'HOST': '127.0.0.1',
-        'PORT': '5434',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
@@ -121,6 +137,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIR = [Path(__file__).parent / "static"]
+STATIC_ROOT = BASE_DIR / "static"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

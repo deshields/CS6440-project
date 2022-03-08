@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  healthduct:
+    container_name: healthduct
+    build: .
+    ports:
+      - "15001:8000"
+    depends_on:
+      - db
+    environment:
+      - CREATOR=adeshields
+      - DJANGO_SETTINGS_MODULE=django_react.settings
+    networks:
+      healthduct_net:
+    links:
+      - db:db
+    
+  db:
+    container_name: db
+    restart: always
+    image: postgres:13.3
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      healthduct_net:
+        aliases:
+          - db
+
+networks:
+  default:
+    driver: bridge
+  healthduct_net:

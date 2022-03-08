@@ -1,0 +1,19 @@
+{% load static %}{% load render_bundle from webpack_loader %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% csrf_token %}
+    <meta charset="UTF-8"/>
+    <title>HealthDuct</title>
+</head>
+<body>
+    <div id="react"></div>
+    <script>
+        window.props = {{ props | safe }};
+    </script>
+    {% render_bundle 'main' %}
+</body>
+
+</html>
