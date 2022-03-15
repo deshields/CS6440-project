@@ -66,7 +66,28 @@ CORS_ORIGIN_WHITELIST = [
      'http://localhost:15001'
 ]
 
+AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend', "django_react.backends.loginBackend.ProviderBackend"]
+
 ROOT_URLCONF = 'django_react.urls'
+LOGGING_CONFIG = None
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+        }
+    },
+}
 
 TEMPLATES = [
     {

@@ -4,7 +4,8 @@ const absolute = {
     signup: () => "/signup",
     provider: urlID => `/provider?id=${urlID}`,
     institution: urlID => `/institution?id=${urlID}`,
-    patient: urlID => `/patient?id=${urlID}`
+    patient: urlID => `/patient?id=${urlID}`,
+    patientList: () => "/patients"
 }
 
 const pattern = {

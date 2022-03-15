@@ -2,6 +2,7 @@ FROM python:3.9-buster
 
 LABEL description="The Healthduct application"
 
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED 1
 ENV PATH="/code/django_react/scripts:${PATH}"
 
@@ -26,6 +27,7 @@ EXPOSE 8000
 
 RUN ./manage.py collectstatic --noinput
 RUN ./manage.py makemigrations --noinput
+RUN ./manage.py makemigrations django_react --noinput
 # RUN ./manage.py migrate --noinput
 
-CMD ["gunicorn", "django_react.wsgi", "--bind", "0.0.0.0:8000", "--log-level", "debug", "-t", "3000", "-w", "12", "--threads", "8"]
+CMD ["gunicorn", "django_react.wsgi", "--bind", "0.0.0.0:8000", "--enable-stdio-inheritance", "--capture-output", "--log-level", "debug", "--logger-class", "django_react.wsgi.CustomLogger", "-t", "3000", "-w", "12", "--threads", "8"]
