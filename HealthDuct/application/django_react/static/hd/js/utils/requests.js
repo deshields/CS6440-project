@@ -10,7 +10,7 @@ const _fetch = (url, options) => {
     })
 }
 
-const fetchJSON = (url, option) => {
+const fetchJSON = (url, options) => {
     return _fetch(url, options).then(resp => resp.json())
 }
 

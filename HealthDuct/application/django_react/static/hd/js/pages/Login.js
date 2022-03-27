@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Redirect } from "react-router-dom";
+import { Redirect, useHistory } from "react-router-dom";
 import makeStyles from '@mui/styles/makeStyles'
 import { alpha, styled } from '@mui/material/styles';
 import { HDTextField } from "../components/CustomInputs";
-import { Typography, TextField, Container, Button, FormControl, OutlinedInput } from "@mui/material";
+import { Typography, Grid, Container, Button, } from "@mui/material";
+
+import { postJSON } from "../utils/requests";
 
 const useStyles = makeStyles(theme => ({
     button: {
@@ -24,12 +26,13 @@ const useStyles = makeStyles(theme => ({
     }
 }))
 
-const Login = ({ onUsernameChange, setCurrentUserData }) => {
-    let [username, setUsername] = useState("")
+const Login = ({ setUserData }) => {
+    const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState(false)
-
+    const [providerType, setProviderType] = useState("")
     const classes = useStyles()
+    const history = useHistory()
 
     const handlePasswordChange = (event) => {
         setPassword(event.target.value)
@@ -41,9 +44,27 @@ const Login = ({ onUsernameChange, setCurrentUserData }) => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
+        let data = {
+            username: username,
+            password: password,
+            provider_type: providerType
 
-        // send to user/pass to backend
-        onUsernameChange(username)
+        }
+        postJSON("api/login/", data).then(response => {
+            if(!response.ok){
+                throw Error(response.statusText)
+            }
+            return response.json()
+        }).then(userdata => {
+            console.log(userdata)
+            setUserData(userdata["user_data"])
+            history.push("")
+
+        }).catch(err => {
+            setError(err)
+            alert(err)
+            console.log(err)
+        })
         setPassword("")
     }
 
@@ -51,6 +72,18 @@ const Login = ({ onUsernameChange, setCurrentUserData }) => {
         <Container >
             <Typography variant="h2">Sign In</Typography>
             <form noValidate className={classes.form}>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} sm={5}>
+                        <Button variant="outlined" disabled={providerType == "mental"} onClick={() => setProviderType("mental")} fullWidth>Mental Health Provider</Button> 
+                    </Grid>
+                    <Grid item xs={12} sm={5}>
+                        <Button variant="outlined" disabled={providerType == "phys"} onClick={() => setProviderType("phys")} fullWidth>Physical Health Provider</Button>
+                    </Grid>
+                    <Grid item xs={12} sm={5}>
+                        <Button variant="outlined" disabled={providerType == "patient"} onClick={() => setProviderType("patient")} fullWidth>Patient</Button>
+                    </Grid>
+                </Grid>
+                <div style={{margin: "2%"}}/>
                 <HDTextField 
                     variant="outlined"
                     required
@@ -84,7 +117,7 @@ const Login = ({ onUsernameChange, setCurrentUserData }) => {
                     onClick={handleSubmit}
                     className={classes.button}
                     style={{ marginTop: "2%", borderColor: "white" }}
-                    disabled={username == "" || password == ""}
+                    disabled={username == "" || password == "" || providerType == ""}
                 >
                     <Typography variant="overline">Login</Typography>
                 </Button>
@@ -93,8 +126,8 @@ const Login = ({ onUsernameChange, setCurrentUserData }) => {
     )
 }
 
-const LoginPage = ({username, onUsernameChange, setUserData}) => {
-    return username ? <Redirect to={{pathname: '/'}}/> : <Login onUsernameChange={onUsernameChange} setCurrentUserData={setUserData}/>;
+const LoginPage = ({userData, setUserData}) => {
+    return userData != null ? <Redirect to={{pathname: '/'}}/> : <Login setUserData={setUserData}/>;
 }
 
 export default LoginPage;

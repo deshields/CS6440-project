@@ -66,7 +66,8 @@ CORS_ORIGIN_WHITELIST = [
      'http://localhost:15001'
 ]
 
-AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend', "django_react.backends.loginBackend.ProviderBackend"]
+# AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend', "django_react.backends.loginBackend.ProviderBackend"]
+AUTHENTICATION_BACKENDS =  ["django_react.backends.loginBackend.ProviderBackend", 'django.contrib.auth.backends.ModelBackend']
 
 ROOT_URLCONF = 'django_react.urls'
 LOGGING_CONFIG = None

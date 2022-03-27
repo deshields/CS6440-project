@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import makeStyles from '@mui/styles/makeStyles'
-import { alpha, styled } from '@mui/material/styles';
 import { HDSelectField, HDTextField } from "../components/CustomInputs";
 import { Typography,Container, Button, MenuItem, Stepper, Grid, Step, StepLabel, Link } from "@mui/material";
-import InputLabel from '@mui/material/InputLabel';
 
 import { postJSON } from "../utils/requests";
 
@@ -38,7 +36,7 @@ const NeedsVerify = ({userdata}) => {
 
     const handleVerify = () => {
         setVerifying(true)
-        postJSON("api/verify", userdata).then(resp => {
+        postJSON("api/verify/", userdata).then(resp => {
             if(!resp.ok){
                 throw Error(resp.statusText)
             }
@@ -107,17 +105,19 @@ const AffiliatesStep = ({affiliate, setAffil, institutions, setProviderType, pro
             <Typography variant="h4">Affiliated Institution</Typography>
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={5}>
-                    <Button variant="outlined" disabled={providerType == "mental"} onClick={() => handleTypeChange("mental")} label="First Name" fullWidth>Mental Health Provider</Button> 
+                    <Button variant="outlined" disabled={providerType == "mental"} onClick={() => handleTypeChange("mental")} fullWidth>Mental Health Provider</Button> 
                 </Grid>
                 <Grid item xs={12} sm={5}>
-                    <Button variant="outlined" disabled={providerType == "phys"} onClick={() => handleTypeChange("phys")} label="Last Name" fullWidth>Physical Health Provider</Button>
+                    <Button variant="outlined" disabled={providerType == "phys"} onClick={() => handleTypeChange("phys")}fullWidth>Physical Health Provider</Button>
                 </Grid>
-                <Grid item xs={12}>
-                    {/* <InputLabel id="instaSelect">Affiliated Institutions</InputLabel> */}
+                <Grid item xs={12} sm={5}>
+                    <Button variant="outlined" disabled={providerType == "patient"} onClick={() => handleTypeChange("patient")} fullWidth>Patient</Button> 
+                </Grid>
+                {(providerType == "phys" || providerType == "mental") && <Grid item xs={12}>
                     <HDSelectField style={{width: 300}} labelId="instaSelect" label="Affiliated Institutions" variant="outlined" onChange={handleAffilChange} value={affiliate}>
                         <div className={classes.bgSetting}>{institutions.map(i => (<MenuItem key={i} value={i} className={classes.bgSetting}>{i}</MenuItem>))}</div>
                     </HDSelectField>
-                </Grid>
+                </Grid>}
             </Grid>
         </React.Fragment>
     )
@@ -264,14 +264,11 @@ const SignUp = ({ setCurrentUserData, userData }) => {
         }
 
         postJSON("api/signup/", data).then(response => {
-            console.log(response)
-            console.log(response.body)
             if(!response.ok){
                 throw Error(response.statusText)
             }
             return response.json()
         }).then(userdata => {
-            console.log(userdata)
             setCurrentUserData(userdata["user_data"])
         })
         setPassword("")
@@ -287,9 +284,10 @@ const SignUp = ({ setCurrentUserData, userData }) => {
           case 2:
             return <CredentialsStep username={username} password={password} setPassword={setPassword} setUsername={setUsername}/>;
           default:
-            return <div>Not Found</div>;
+            return  <NeedsVerify userdata={userData}/>;
         }
       }
+
 
     return (
         <Container >
@@ -328,7 +326,7 @@ const SignUp = ({ setCurrentUserData, userData }) => {
 }
 
 const SignUpPage = ({ setUserData, userData }) => {
-    return userData.email ? <Redirect to={{pathname: '/'}}/> : <SignUp setCurrentUserData={setUserData} userData={userData}/>;
+    return userData != null ? <Redirect to={{pathname: '/'}}/> : <SignUp setCurrentUserData={setUserData} userData={userData}/>;
 }
 
 export default SignUpPage;

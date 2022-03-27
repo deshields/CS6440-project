@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Route, Redirect, BrowserRouter as Router, Switch, Link, useLocation } from "react-router-dom";
+import queryString from "query-string"
 import { Container } from "@mui/material";
 import { CssBaseline, Button } from "@mui/material";
 import { ThemeProvider, createTheme, styled } from "@mui/material/styles";
@@ -9,6 +10,8 @@ import {TransitionGroup, CSSTransition} from "react-transition-group";
 import WelcomePage from "./WelcomePage";
 import LoginPage from "./Login";
 import SignUpPage from "./SignUp";
+import Provider from "./Provider";
+import PatientPage from "./Patient";
 
 import HeadBar from "../components/HeadBar";
 import navs from "../utils/navlinks";
@@ -32,19 +35,27 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const WelcomeWrapper  = (url_id) => {
-    return url_id ? () => <Redirect to={urls.navlink.to.provider(url_id)}/> : WelcomePage
+const WelcomeWrapper  = (userData) => {
+    return userData != null ? () => <Redirect to={userData.provider_type == "patient" ? navs.navlink.to.patient(userData.url) : navs.navlink.to.provider(userData.url)}/> : WelcomePage
 }
 
-const LoginInWrapped = (username, setUsername) => () => (
- <LoginPage username={username} onUsernameChange={setUsername}/>
+const ProviderPageWrapper = userData => ({ location }) => (
+    <Provider current_userdata={userData} chosen_url={queryString.parse(location.search).id} />
+)
+
+const PatientPageWrapper = userData => ({ location }) => (
+    <PatientPage loggedInUserData={userData} patientUrlId={queryString.parse(location.search).id} />
+)
+
+const LoginInWrapped = (userData, setUserData) => () => (
+    <LoginPage userData={userData} setUserData={setUserData}/>
 )
 
 const SignUpWrapped = (setUserData, userData) => () => (
     <SignUpPage setUserData={setUserData} userData={userData}/>
    )
 
-const HdRoutes = ({username, setUsername, setUserData, userData}) => {
+const HdRoutes = ({ setUserData, userData}) => {
     let location = useLocation();
     return (
         <TransitionGroup>
@@ -55,9 +66,11 @@ const HdRoutes = ({username, setUsername, setUserData, userData}) => {
                 unmountOnExit
             >
                 <Switch location={location}>
-                    <Route exact path="/" component={WelcomeWrapper(userData.url_id)}/>
-                    <Route path={navs.navlink.to.login()} component={LoginInWrapped(username, setUsername, setUserData)}/>
+                    <Route exact path="/" component={WelcomeWrapper(userData)}/>
+                    <Route path={navs.navlink.to.login()} component={LoginInWrapped(userData, setUserData)}/>
                     <Route path={navs.navlink.to.signup()} component={SignUpWrapped(setUserData, userData)}/>
+                    <Route path={navs.pattern.for.provider()} component={ProviderPageWrapper(userData)} />
+                    <Route path={navs.pattern.for.patient()} component={PatientPageWrapper(userData)}/>
                 </Switch>
             </CSSTransition>
          </TransitionGroup>
@@ -135,7 +148,7 @@ export default function Dashboard() {
             },
         }
     }))
-    const [userData, setUserData] = useState({})
+    const [userData, setUserData] = useState(null)
     
     const classes = useStyles(theme)
     const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
@@ -149,7 +162,7 @@ export default function Dashboard() {
                     <main className={classes.content}>
                         <Offset/>
                         <Container>
-                            <HdRoutes username={username} setUsername={setUsername} setUserData={setUserData} userData={userData}/>
+                            <HdRoutes setUserData={setUserData} userData={userData}/>
                         </Container>
                     </main>
                 </Router>

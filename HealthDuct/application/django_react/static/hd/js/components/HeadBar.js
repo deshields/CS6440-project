@@ -18,19 +18,29 @@ const HDDrawer = styled(Drawer)({
 
 const AnonLinks = () => (
     <div>
-        <ListItem button components={Link} key={"Login"} to={navs.navlink.to.login()}>
+        <ListItem button component={Link} key={"Login"} to={navs.navlink.to.login()}>
             <ListItemText primary={"Login"} />
         </ListItem>
-        <ListItem button components={Link} key={"Signup"} to={navs.navlink.to.signup()}>
+        <ListItem button component={Link} key={"Signup"} to={navs.navlink.to.signup()}>
             <ListItemText primary={"Sign Up"} />
         </ListItem>
     </div>
 )
 
-const LoggedInLinks = () => (
+const LoggedInLinks = (provider) => (
     <div>
-        <ListItem button components={Link} key={"Patients"} to={navs.navlink.to.patientList()}>
-            <ListItemText primary={"View Your Patients"} />
+        {provider && (
+        <div>
+            <ListItem button component={Link} key={"Patients"} to={navs.navlink.to.patientList()}>
+                <ListItemText primary={"View Your Patients"} />
+            </ListItem>
+            <ListItem button component={Link} key={"Code"} to={navs.navlink.to.patientList()}>
+                <ListItemText primary={"Enter Patient Invite Code"} />
+            </ListItem>
+        </div>)
+        }
+        <ListItem button key={"Patients"} onClick={() => logOut()}>
+            <ListItemText primary={"Log Out"} />
         </ListItem>
     </div>
 )
@@ -62,7 +72,7 @@ export default function HeadBar({ userData,  setData}){
 
     return(
         <div>
-            <AppBar position="fixed" style={{background:"transparent"}}>
+            <AppBar position="fixed" style={{background:"transparent", boxShadow: "none"}}>
                 <Toolbar>
                     <IconButton
                     size="large"
@@ -76,37 +86,11 @@ export default function HeadBar({ userData,  setData}){
                     </IconButton>
 
                 {
-                    userData.first_name && (
-                        <div>
-                            <IconButton
-                                size="large"
-                                aria-label="account of current user"
-                                aria-controls="menu-appbar"
-                                aria-haspopup="true"
-                                onClick={handleMenu}
-                                color="inherit"
-                            >
-                                <Typography>
-                                    {userData.first_name}
-                                </Typography>
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorEl}
-                                anchorOrigin={{
-                                vertical: 'top',
-                                horizontal: 'right',
-                                }}
-                                keepMounted
-                                transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'right',
-                                }}
-                                open={Boolean(anchorEl)}
-                                onClose={handleClose}
-                            >
-                                <MenuItem onClick={() => logOut()}>Log out</MenuItem>
-                            </Menu>
+                    userData != null && (
+                        <div style={{borderLeft: "solid"}}>
+                            <Typography>
+                                {userData.first_name} {userData.last_name}
+                            </Typography>
                         </div>
                     )
                 }
@@ -128,7 +112,7 @@ export default function HeadBar({ userData,  setData}){
                             <ListItemText primary={"Home"} />
                         </ListItem>
                         {
-                            userData.first_name ? <LoggedInLinks /> : <AnonLinks />
+                            userData != null ? <LoggedInLinks provider={userData.provider_type != "patient"}/> : <AnonLinks />
                         }
                     </List>
                 </Box>
