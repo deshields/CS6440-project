@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require("webpack");
 var BundleTracker = require('webpack-bundle-tracker');
 
 module.exports = {
@@ -12,6 +13,10 @@ module.exports = {
     plugins: [
       new BundleTracker({
         filename: './application/webpack-stats.json',
+      }),
+      new webpack.ProvidePlugin({
+        Buffer: ["buffer", "Buffer"],
+        process: "process/browser",
       }),
     ],
     module: {
@@ -38,7 +43,23 @@ module.exports = {
           }
         ]
       },
-      resolve: {
-        extensions: ["*", ".js", ".jsx"]
+    resolve: {
+      extensions: ["*", ".js", ".jsx"],
+      fallback: {
+        module: "empty",
+        dgram: "empty",
+        dns: "mock",
+        fs: "empty",
+        http2: "empty",
+        net: "empty",
+        tls: "empty",
+        child_process: "empty",
+        process: require.resolve("process/browser"),
+        zlib: require.resolve("browserify-zlib"),
+        stream: require.resolve("stream-browserify"),
+        util: require.resolve("util"),
+        buffer: require.resolve("buffer"),
+        asset: require.resolve("assert"),
       }
+    }
 };

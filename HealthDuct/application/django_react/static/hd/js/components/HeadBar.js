@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { AppBar, Toolbar, Drawer, IconButton, Typography, List, ListItem, ListItemText, Box } from "@mui/material";
 import { MenuItem, Menu } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -27,26 +27,37 @@ const AnonLinks = () => (
     </div>
 )
 
-const LoggedInLinks = (provider) => (
-    <div>
-        {provider && (
+const LoggedInLinks = ({provider, setData, handleClose}) => {
+    const history = useHistory()
+
+    const logOut = () => {
+        handleClose()
+        setData(null)
+        history.push("/")
+    }
+
+
+    return (
         <div>
-            <ListItem button component={Link} key={"Patients"} to={navs.navlink.to.patientList()}>
-                <ListItemText primary={"View Your Patients"} />
+            {/* {provider && (
+            <div>
+                <ListItem button component={Link} key={"Patients"} to={navs.navlink.to.patientList()}>
+                    <ListItemText primary={"View Your Patients"} />
+                </ListItem>
+                <ListItem button component={Link} key={"Code"} to={navs.navlink.to.patientList()}>
+                    <ListItemText primary={"Enter Patient Invite Code"} />
+                </ListItem>
+            </div>)
+            } */}
+            <ListItem button key={"Patients"} onClick={() => logOut()}>
+                <ListItemText primary={"Log Out"} />
             </ListItem>
-            <ListItem button component={Link} key={"Code"} to={navs.navlink.to.patientList()}>
-                <ListItemText primary={"Enter Patient Invite Code"} />
-            </ListItem>
-        </div>)
-        }
-        <ListItem button key={"Patients"} onClick={() => logOut()}>
-            <ListItemText primary={"Log Out"} />
-        </ListItem>
-    </div>
-)
+        </div>
+    )
+}
 
 
-export default function HeadBar({ userData,  setData}){
+export default function HeadBar({userData,  setData}){
     const [openDrawer, setOpenDrawer] = useState(false)
     const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -64,11 +75,6 @@ export default function HeadBar({ userData,  setData}){
     const handleClose = () => {
         setAnchorEl(null);
       };
-
-    const logOut = () => {
-        setData({})
-        handleClose({})
-    }
 
     return(
         <div>
@@ -88,9 +94,18 @@ export default function HeadBar({ userData,  setData}){
                 {
                     userData != null && (
                         <div style={{borderLeft: "solid"}}>
-                            <Typography>
-                                {userData.first_name} {userData.last_name}
-                            </Typography>
+                            <IconButton
+                                size="large"
+                                aria-label="account of current user"
+                                aria-controls="menu-appbar"
+                                aria-haspopup="true"
+                                color="inherit"
+                                component={Link} key={"user"} to="/"
+                            >
+                                <Typography>
+                                    {userData.first_name} {userData.last_name}
+                                </Typography>
+                            </IconButton>
                         </div>
                     )
                 }
@@ -112,7 +127,7 @@ export default function HeadBar({ userData,  setData}){
                             <ListItemText primary={"Home"} />
                         </ListItem>
                         {
-                            userData != null ? <LoggedInLinks provider={userData.provider_type != "patient"}/> : <AnonLinks />
+                            userData != null ? <LoggedInLinks provider={userData.provider_type != "patient"} setData={setData} handleClose={handleClose}/> : <AnonLinks />
                         }
                     </List>
                 </Box>

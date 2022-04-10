@@ -68,10 +68,11 @@ class Patient(models.Model):
     url_id = models.CharField(default=get_random_string(length=15), max_length=15, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=10, blank=True, null=True)
-    assigned_mental_provider = models.OneToOneField(MentalProvider, on_delete=models.CASCADE, null=True)
-    assigned_physical_provider = models.OneToOneField(PhysicalProvider, on_delete=models.CASCADE, null=True)
+    assigned_mental_provider = models.ForeignKey(MentalProvider, on_delete=models.CASCADE, null=True)
+    assigned_physical_provider = models.ForeignKey(PhysicalProvider, on_delete=models.CASCADE, null=True)
     verified = models.BooleanField(default=False)
     contact = models.JSONField(null=True)
+    drug_list = models.TextField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
@@ -95,26 +96,26 @@ class Patient(models.Model):
 
 class TreatmentPlan(models.Model):
     plan_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    assigned_patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    assigned_patient = models.OneToOneField(Patient, on_delete=models.CASCADE)
 
 class TreatmentNotes(models.Model):
     note_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    treatment_plan = models.ForeignKey(TreatmentPlan, on_delete=models.CASCADE)
-    m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.CASCADE)
-    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.CASCADE)
+    treatment_plan = models.OneToOneField(TreatmentPlan, on_delete=models.CASCADE, null=True)
+    m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.RESTRICT, null=True)
+    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.RESTRICT)
     contents = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class TreatmentNoteComments(models.Model):
     comment_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.CASCADE)
-    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.CASCADE)
+    m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.RESTRICT, null=True)
+    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.RESTRICT, null=True)
     treatment_note = models.ForeignKey(TreatmentNotes, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     contents = models.TextField()
 
 class PatientInviteCode(models.Model):
-    patient_uuid = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    patient_uuid = models.OneToOneField(Patient, on_delete=models.CASCADE)
     code = models.CharField(default=get_random_string(length=10), max_length=10, unique=True)
     valid_for_mp = models.BooleanField(default=True)
     valid_for_pcp = models.BooleanField(default=True)

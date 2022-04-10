@@ -11,6 +11,7 @@ services:
     environment:
       - CREATOR=adeshields
       - DJANGO_SETTINGS_MODULE=django_react.settings
+      - FDA_KEY=${FDA_KEY}
     networks:
       healthduct_net:
     links:

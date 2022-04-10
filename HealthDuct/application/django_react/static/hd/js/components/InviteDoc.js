@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+// import { Buffer } from 'buffer';
+// global.Buffer = Buffer
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
-import { fetchJSON } from '../utils/requests';
+import { postJSON } from '../utils/requests';
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import { IconButton, Typography, Box, Grid, Tooltip } from "@mui/material";
 import FormLabel from '@mui/material/FormLabel';
@@ -9,7 +11,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
-import Dialog from '@mui/material/Dialog';
+import { HDDialog } from "./CustomInputs";
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
@@ -28,20 +30,13 @@ const styles = StyleSheet.create({
   },
   code: {
     color: 'white',
-    background: 'slateblue'
+    backgroundColor: 'slateblue'
   }
 });
 
-const PDFCode = ({type}) => (
-    <Tooltip title={`Request new ${type} provider`}>
-        <IconButton>
-            <NextPlanIcon/>
-        </IconButton>
-    </Tooltip>
-)
 
 const patientCode = (patientId) => {
-    postJSON('api/patient/get_invite', {'patientId': patientId}).then(resp => {
+    postJSON('api/patient/invite/get', {'patientId': patientId}).then(resp => {
         if(!resp.ok){
             throw Error(resp.statusText)
         }
@@ -52,16 +47,15 @@ const patientCode = (patientId) => {
 }
 
 // Create Document Component
-const PatientInviteDocument = ({patientData}) => {
-    const code = patientCode(patientData.url)
+const PatientInviteDocument = ({patientData, code}) => {
+    const get_code = patientCode(patientData.url)
+    console.log(code)
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 <View style={styles.section}>
                     <Text>By submission of this document, patient {patientData.title} {patientData.first_name} {patientData.last_name} gives permission to the recipient provider to access the patient's data in regards to
                     their mental or physical health. This may include therapy notes, prescriptions, diagnoses and current treatmen plans.</Text>
-                </View>
-                <View style={styles.section}>
                     <Text style={styles.code}>{code}</Text>
                 </View>
             </Page>
@@ -69,7 +63,7 @@ const PatientInviteDocument = ({patientData}) => {
     )
 };
 
-const NewCode = ({patient, newProviders}) => {
+const NewPatientCode = ({patient}) => {
     const [loading, setLoading] = useState(false)
     const [code, setCode] = useState(null)
     const [open, setOpen] = React.useState(false);
@@ -102,12 +96,15 @@ const NewCode = ({patient, newProviders}) => {
         }).then(data => {
             setLoading(false)
             setCode(data["code"])
+            console.log(data["code"])
+            console.log(data)
+
         })
     }
 
     const InviteDialog = ({}) => {
         return(
-            <Dialog 
+            <HDDialog 
             open={open}
             onClose={handleClose}
             >
@@ -135,19 +132,19 @@ const NewCode = ({patient, newProviders}) => {
                         <NextPlanIcon/>
                     </IconButton>
                 </DialogActions>
-            </Dialog>
+            </HDDialog>
         )
     }
 
     return(
         <React.Fragment>
             <Tooltip title={`Invite new provider(s)`}>
-                <IconButton onClick={() => inviting()}>
+                <IconButton onClick={() => handleClickOpen()}>
                     <NextPlanIcon/>
                 </IconButton>
             </Tooltip>
             <InviteDialog/>
-            {code != null && <ViewCodeDoc patient={patient}/>}
+            {code != null && <ViewCodeDoc patient={patient} code={code}/>}
         </React.Fragment>
     )
 }
@@ -157,12 +154,12 @@ const openPDF = (url) => {
 };
 
 
-const ViewCodeDoc = ({patient}) => (
-    <PDFDownloadLink document={<PatientInviteDocument patientData={patient}/>}>
+const ViewCodeDoc = ({patient, code}) => (
+    <PDFDownloadLink document={<PatientInviteDocument patientData={patient} code={code}/>}>
       {({ blob, url, loading, error }) =>
-                loading ? 'Loading document...' : openPDF(url)
+        loading ? 'Loading document...' : openPDF(url)
      }
     </PDFDownloadLink>
   )
 
-export default PatientInviteDocument;
+export default NewPatientCode;

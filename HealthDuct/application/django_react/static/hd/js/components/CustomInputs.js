@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { TextField, Select } from "@mui/material";
+import { TextField, Select, Dialog } from "@mui/material";
 
 const HDTextField = styled(TextField)({
     '& label.Mui-focused': {
@@ -41,4 +41,14 @@ const HDTextField = styled(TextField)({
     },
   });
 
-  export {HDTextField, HDSelectField};
+  const HDDialog = styled(Dialog)({
+    'backgroundColor': "transparent",
+    '& .MuiPaper-root': {
+      'backgroundColor': "transparent",
+    },
+    '& .MuiPaper-elevation': {
+      'backgroundColor': "transparent",
+    }
+  })
+
+  export {HDTextField, HDSelectField, HDDialog};

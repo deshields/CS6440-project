@@ -23,11 +23,14 @@ urlpatterns = [
     path("api/login/", views.login),
     path("api/signup/", views.sign_up),
     path("api/provider/<str:url_id>", views.get_provider_info),
+    path("api/provider/patient/add", views.add_patient),
     path("api/patient/<str:url_id>", views.get_patient_info),
-    path("api/patient/invite", views.get_invite),
+    path("api/patient/invite/get", views.get_invite),
     path("api/patient/invite/new", views.make_invite),
     path("api/patient/invite/update", views.update_invite),
-    path("api/verify/", views.verify),
+    path("api/treatment/get", views.get_treatment_plan),
+    path("api/verify", views.verify),
+    path("api/drug/<str:product>", views.get_drug_label),
     re_path(r"^(?:.*)/?$", views.index)
 
     # path("login/", views.view_js_app)

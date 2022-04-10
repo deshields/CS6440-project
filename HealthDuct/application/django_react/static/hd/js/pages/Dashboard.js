@@ -161,7 +161,7 @@ export default function Dashboard() {
                     <HeadBar userData={userData} setData={setUserData}/>
                     <main className={classes.content}>
                         <Offset/>
-                        <Container>
+                        <Container sx={{height:"70%", maxHeight:"80%"}}>
                             <HdRoutes setUserData={setUserData} userData={userData}/>
                         </Container>
                     </main>
