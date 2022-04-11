@@ -1,5 +1,7 @@
 
-import { IconButton, Typography, Box, Grid, CircularProgress, Tab, Tabs, Divider, Drawer} from "@mui/material";
+import { IconButton, Typography, Box, Grid, CircularProgress, Tab, Tabs, Divider, Drawer, Collapse, List, ListItemButton, ListItemText} from "@mui/material";
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import React, { useState } from "react";
 import { styled, useTheme } from '@mui/material/styles';
 import PropTypes from 'prop-types';
@@ -23,7 +25,7 @@ const DetailDrawer = styled(Drawer)(({ theme }) => ({
    backgroundColor: "transparent",
    '& .MuiDrawer-paper': {
     backgroundColor: 'transparent', 
-    paddingTop: 50
+    padding: "50px 0px 0px 10px" 
    }
   }));
 
@@ -63,6 +65,30 @@ function a11yProps(index) {
 
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  const DataSection = ({header, body}) => {
+      const [open, setOpen] = useState(false)
+      const handleClick = () => {
+        setOpen(!open);
+      };
+      
+      return(
+        <React.Fragment>
+            <ListItemButton onClick={handleClick}>
+                <ListItemText primary={<Typography variant="h5">{header}</Typography>}/>
+                {open ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                    <ListItemButton sx={{ pl: 4 }}>
+                        <ListItemText primary={<Typography>{body}</Typography>} />
+                    </ListItemButton>
+                </List>
+            </Collapse>
+        </React.Fragment>
+      )
+
   }
 
   const InformationPanel = ({patientData, editable, value, index}) => { 
@@ -161,6 +187,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
     const [patientPlan, setPatientPlan] = useState(null)
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [product, setCurrentProduct] = useState({})
+
     React.useEffect(() => {
         fetchJSON(`api/patient/${patientUrlId}`).then(data => {
             setIsProvider((loggedInUserData.provider_type == "mental" && loggedInUserData.url == data["user_data"].provider.mental.url) || (loggedInUserData.provider_type == "phys" && loggedInUserData.url == data["user_data"].provider.phys.url))
@@ -168,6 +195,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
         })
 
     }, [loadOnce])
+    console.log(product)
 
     React.useEffect(() => {
         if(isProvider){
@@ -202,6 +230,30 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
     const handleChange = (event, newValue) => {
         setValue(newValue);
       };
+
+    function CapString(str){
+        const arr = str.split(" ");
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+
+        }
+        return arr.join(" ");
+    }
+
+    const
+      isObject = v => v && typeof v === 'object' && !Array.isArray(v),
+      recursion = (item, path = '') => isObject(item)
+          ? Object
+              .keys(item)
+              .flatMap(k => recursion(item[k], k))
+          : { item, path };
+
+    const formatKey = (key) => {
+        return CapString(key.replaceAll("_", " "))
+    }
+
+    const omitHeaders = ["set_id", "effective_time", "version"]
+
 
     return(
         <React.Fragment>
@@ -242,18 +294,28 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                         <Typography>{product["drug"]}</Typography>
                     </DrawerHeader>
                     <Divider />
-                    {/* {Object.keys(product["results"]).map(key => {
+                            {product["results"] && product["results"].map((result, index) => {
+                                return (
+                                    <div>
+                                        <Typography variant="h4">Result {product["results"].length > 1 && index}</Typography>
+                                        <List>
+                                            {recursion(result).map(deet => {
+                                                console.log(deet)
+                                                // if ingredients in path; offer ingredient search
+                                                if(omitHeaders.findIndex(element => element.includes(deet["path"])) == -1){
+                                                    return(
+                                                            <DataSection header={formatKey(deet["path"])} body={deet["item"]}/>
+                                                    )
+                                                }
+                                            })}
+                                        </List>
+                                    </div>
+                                )
+                            })}
+                            
 
-                        return (
-                            <div>
 
-                            <Typography variant="h5">{key}</Typography>
-                            <Typography>{JSON.stringify(product["results"][key])}</Typography>
-                            </div>
-                        )
-                        
-                    })} */}
-                    {JSON.stringify(product)}
+                    {/* {JSON.stringify(product["results"])} // this works */}
                 </DetailDrawer>}
         </React.Fragment>
     )

@@ -1,4 +1,5 @@
 
+from itertools import count
 from math import prod
 import django_react.models as mdls
 import pandas as pd
@@ -204,8 +205,13 @@ def add_treatment_note(request):
     plan = mdls.TreatmentPlan.object.get_or_create(assigned_patient=patient_id)
 
 def get_drug_label(request, product):
-    api = f"https://api.fda.gov/drug/event.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}"
+    api = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}"
     drug_label_request = requests.get(api)
+    print(drug_label_request.json())
+    ret = drug_label_request.json()
+    counts = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}&count=patient.reaction.reactionmeddrapt.exact"
+    counts_request = requests.get(counts)
+    ret.update({"reaction_counts": counts_request.json()})
     return JsonResponse(drug_label_request.json())
     
     
