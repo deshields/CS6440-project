@@ -194,26 +194,47 @@ def get_treatment_plan(request):
     plan_notes = mdls.TreatmentNotes.filter(note_uuid=plan.plan_uuid)
     plan_comments = mdls.TreatmentNoteComments.filter(treatment_note__note_uuid=plan.plan_uuid)
 
-    notes = {note.timestamp: {"note": note, "comments": list(plan_comments.filter(treatment_note=note.note_uuid).values())} for note in list(plan_notes.values())}
-    return JsonResponse({"plan_note": notes})
+    notes = [{"note": note.contents, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name(), "timestamp": note.timestamp, "comments": [{"contents": com.contents, "timestamp": com.timestamp, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name() } for com in list(plan_comments.filter(treatment_note=note.note_uuid).values())]} for note in list(plan_notes.values())]
+    return JsonResponse({"plan_note": sorted(notes, key=lambda d: d['timestamp'])})
 
 def add_treatment_note(request):
     body = json.loads(request.body)
     patient_url_id = body.get("patientId")
     patient_id = get_object_or_404(mdls.Patient, url_id=patient_url_id)
-    writer = body.get("author")
-    plan = mdls.TreatmentPlan.object.get_or_create(assigned_patient=patient_id)
+    writer = body.get("authorId")
+    writer_type = body.get("authorType")
+    treatment_plan = mdls.TreatmentPlan.object.get_or_create(assigned_patient=patient_id)
+    treatment_note = mdls.TreatmentNotes(TreatmentPlan=treatment_plan, contents=body.get("note"))
+    if writer_type == "mental":
+        treatment_note.m_author_uuid = writer
+    else:
+        treatment_note.p_author_uuid = writer
+    treatment_note.save()
+
+def add_treatment_note_comment(request):
+    body = json.loads(request.body)
+    patient_url_id = body.get("patientId")
+    patient_id = get_object_or_404(mdls.Patient, url_id=patient_url_id)
+    note = body.get("noteId")
+    writer = body.get("authorId")
+    writer_type = body.get("authorType")
+    treatment_plan = get_object_or_404(mdls.TreatmentPlan, assigned_patient=patient_id)
+    treatment_note = get_object_or_404(mdls.TreatmentNotes, treatment_plan=treatment_plan, note_id=note)
+    note_comment = mdls.TreatmentNoteComments(treatment_note=treatment_note, contents=body.get("comment"))
+    if writer_type == "mental":
+        note_comment.m_author_uuid = writer
+    else:
+        note_comment.p_author_uuid = writer
+    note_comment.save()
 
 def get_drug_label(request, product):
     api = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}"
     drug_label_request = requests.get(api)
-    print(drug_label_request.json())
-    ret = drug_label_request.json()
-    counts = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}&count=patient.reaction.reactionmeddrapt.exact"
+    ret = {"label": drug_label_request.json()}
+    counts = f"https://api.fda.gov/drug/event.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}&count=patient.reaction.reactionmeddrapt.exact"
     counts_request = requests.get(counts)
     ret.update({"reaction_counts": counts_request.json()})
-    return JsonResponse(drug_label_request.json())
-    
+    return JsonResponse(ret)
     
 
 def _grab_random_meds():

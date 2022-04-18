@@ -1,5 +1,5 @@
 
-import { IconButton, Typography, Box, Grid, CircularProgress, Tab, Tabs, Divider, Drawer, Collapse, List, ListItemButton, ListItemText} from "@mui/material";
+import { IconButton, Typography, Box, Grid, CircularProgress, Tab, Tabs, Divider, Drawer, Collapse, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import React, { useState } from "react";
@@ -11,6 +11,7 @@ import NextPlanIcon from '@mui/icons-material/NextPlan';
 import NewPatientCode from "../components/InviteDoc";
 import navs from "../utils/navlinks";
 import { HDTextField } from "../components/CustomInputs";
+import { quantile, interquartileRange } from "simple-statistics"
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -72,6 +73,14 @@ function a11yProps(index) {
       const handleClick = () => {
         setOpen(!open);
       };
+
+      const tableOrString = (str) => {
+        if(str.includes("<table")){
+            return  <div dangerouslySetInnerHTML={{ __html: str }} />
+        } else {
+            return str
+        }
+    }
       
       return(
         <React.Fragment>
@@ -82,7 +91,7 @@ function a11yProps(index) {
             <Collapse in={open} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                     <ListItemButton sx={{ pl: 4 }}>
-                        <ListItemText primary={<Typography>{body}</Typography>} />
+                        <ListItemText primary={<Typography>{tableOrString(body)}</Typography>} />
                     </ListItemButton>
                 </List>
             </Collapse>
@@ -91,8 +100,41 @@ function a11yProps(index) {
 
   }
 
+  function DataHeader(props){
+    const { children, header, defaultOpen, ...other } = props;
+
+    const [open, setOpen] = useState(defaultOpen)
+    const handleClick = () => {
+      setOpen(!open);
+    };
+    return (
+        <React.Fragment>
+            <ListItemButton onClick={handleClick}>
+                <ListItemText primary={header}/>
+                {open ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                    {children}
+                </List>
+            </Collapse>
+        </React.Fragment>
+        
+    )
+
+
+  }
+
+  DataHeader.propTypes = {
+    children: PropTypes.node,
+    header: PropTypes.node.isRequired,
+    defaultOpen: PropTypes.bool,
+};
+DataHeader.defaultProps = {
+    defaultOpen: false
+}
+
   const InformationPanel = ({patientData, editable, value, index}) => { 
-      console.log(patientData.provider.mental)
     return (
         <TabPanel value={value} index={index}>
             <Grid container spacing={2}>
@@ -122,12 +164,10 @@ function a11yProps(index) {
   const MedicalDataPanel = ({ patientData, setCurrentProduct, setDrawerOpen, value, index }) => { 
     // where the de-jargoning will happen
     const drugs = patientData["prescriptions"]
-    console.log("here")
-    console.log(drugs)
     const drugList = drugs.split(",")
     function getDrugLabel(drug) {
         fetchJSON(`api/drug/${drug}`).then(data =>{
-            setCurrentProduct({"drug": drug, "results": data["results"]})
+            setCurrentProduct({"drug": drug, "results": data["label"]["results"], "counts": data["reaction_counts"]["results"].slice(0, 9)})
             setDrawerOpen(true)
         })
     }
@@ -154,10 +194,35 @@ function a11yProps(index) {
     )
   }
 
-  const TreatmentPanel = ({plan, value, index}) => { 
+  const TreatmentPanel = ({plan, setPlan, author, patientId, value, index}) => { 
     const [note, setNote] = useState("")
     const handleNoteChange = (event) => {
         setNote(event.target.value)
+    }
+
+    const handlePlanRefresh = () => {
+        setPlan(null)
+        fetchJSON("api/treatment/get").then(data => {
+            setPlan(data.plan_note)
+        })
+    }
+
+    const handleSubmitNote = () => {
+        data = {
+            "authorId": author.url_id,
+            "authorType": author.provider_type,
+            "patientId": patientId,
+            "note": note,
+        }
+        postJSON("api/treatment/note/add", data).then(response => {
+            if(!response.ok){
+                throw Error(response.statusText)
+            }
+            return response.json()
+        }).then(ret_data => {
+            handlePlanRefresh()
+        })
+
     }
 
     // send note to back then refresh notes
@@ -166,12 +231,33 @@ function a11yProps(index) {
         <TabPanel value={value} index={index}>
             <Grid container spacing={2}>
                 <Grid item container direction="column" justifyContent="space-evenly" alignItems="flex-start">
-                    {plan != null && plan.length > 0 ? <Grid item><Typography>Theres a plan!</Typography></Grid> : <Grid item><Typography variant="h4">No treatment plan implemented.</Typography></Grid>}
+                    {plan == null && <CircularProgress />}
+                    {plan != null && plan.length < 0 ? <Grid item><Typography variant="h4">No treatment plan implemented.</Typography></Grid> : 
+                        <Grid container spacing={2} direction="row" item>
+                            {plan != null && plan.map(tnote => {
+                                return(
+                                    <Grid container direction="column" item>
+                                        <Box sx={{ borderRadius: 16 }}>
+                                            <Typography>{tnote.note}</Typography>
+                                            <Typography variant="caption">{tnote.timestamp} - {tnote.author}</Typography>
+                                            {tnote.comments.map(comment => {
+                                                return(
+                                                    <Box>
+                                                        <Typography variant="subtitle1">{comment.contents}</Typography>
+                                                        <Typography variant="caption">{comment.timestamp} - {comment.author}</Typography>
+                                                    </Box>
+                                                )
+                                            })}
+                                        </Box>
+                                    </Grid>
+                                )
+                            })}
+                        </Grid> 
+                    }
                 </Grid>
                 <Grid item justifyContent="space-evenly" alignItems="flex-start" style={{width: "100%"}}>
-
                         <HDTextField style={{width: "60%"}} multiline variant="outlined" value={note} onChange={handleNoteChange} placeholder="Add new treatment note..."/>
-                        <IconButton><Typography variant="overline">Add Treatment Note</Typography></IconButton>
+                        <IconButton onClick={() => handleSubmitNote()} disabled={note.length == 0}><Typography variant="overline">Add Treatment Note</Typography></IconButton>
                 </Grid>
             </Grid>
         </TabPanel>
@@ -212,9 +298,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
     }, [isProvider])
 
     const handleDrawerClose = () => {
-        console.log("closing...")
         setDrawerOpen(false)
-        console.log(drawerOpen)
         setCurrentProduct({})
     }
 
@@ -252,7 +336,23 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
         return CapString(key.replaceAll("_", " "))
     }
 
-    const omitHeaders = ["set_id", "effective_time", "version"]
+    const omitHeaders = ["set_id", "effective_time", "version", "spl_set_id", "spl_id"]
+
+    const removeOutliers = (count_dict) => {
+        count_dict.sort(function (a, b) {
+            return a.count - b.count;
+        });
+        const counts = count_dict.map(c => c.count)
+        const q1 = quantile(counts, 0.25)
+        const q3 = quantile(counts, 0.75)
+        const qrange = interquartileRange(counts)
+
+        let step2 = qrange * 1.5
+        let upperLimit = step2 + q3
+        let lowerLimit = q1 - step2
+
+        return count_dict.filter(c => c.count > lowerLimit && c.count < upperLimit)
+    }
 
 
     return(
@@ -275,7 +375,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                     </Tabs>
                     <InformationPanel patientData={patientData} editable={editable} value={value} index={0}/>
                     {isProvider && <MedicalDataPanel patientData={patientData} setCurrentProduct={setCurrentProduct} setDrawerOpen={setDrawerOpen} value={value} index={1} />}
-                    {isProvider && <TreatmentPanel plan={patientPlan} value={value} index={2} />}
+                    {isProvider && <TreatmentPanel plan={patientPlan} setPlan={setPatientPlan} author={loggedInUserData} value={value} index={2} />}
                 </div>
             </Box>
                 {isProvider && <DetailDrawer
@@ -294,28 +394,43 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                         <Typography>{product["drug"]}</Typography>
                     </DrawerHeader>
                     <Divider />
+                    <Typography variant="overline">The following data from the FDA is intended only for your informational purposes. Please do not use it to make medical decisions.</Typography>
+                    <Divider />
+                        <List>                
                             {product["results"] && product["results"].map((result, index) => {
                                 return (
-                                    <div>
-                                        <Typography variant="h4">Result {product["results"].length > 1 && index}</Typography>
-                                        <List>
-                                            {recursion(result).map(deet => {
-                                                console.log(deet)
-                                                // if ingredients in path; offer ingredient search
-                                                if(omitHeaders.findIndex(element => element.includes(deet["path"])) == -1){
-                                                    return(
-                                                            <DataSection header={formatKey(deet["path"])} body={deet["item"]}/>
-                                                    )
-                                                }
-                                            })}
-                                        </List>
-                                    </div>
+                                        <DataHeader header={<Typography variant="h4">Result {product["results"].length > 1 && index}</Typography>} defaultOpen={product["results"].length == 1}>
+                                            <List>
+                                                {recursion(result).map(deet => {
+                                                    // if ingredients in path; offer ingredient search
+                                                    if(omitHeaders.findIndex(element => element.includes(deet["path"])) == -1){
+                                                        return(
+                                                                <DataSection header={formatKey(deet["path"])} body={deet["item"]}/>
+                                                        )
+                                                    }
+                                                })}
+                                            </List>
+                                        </DataHeader>
+                                        
                                 )
                             })}
+                            {product["counts"] && (
+                                    <DataHeader header={<Typography variant="h4">Surveyed Symptom Count</Typography>}>
+                                        <Typography variant="subtitle1">Top 10 Results</Typography>
+                                        <List>
+                                            {product["counts"].map(result => {
+                                                return(
+                                                    <ListItem>
+                                                        <ListItemText primary={<Typography variant="body2">{result["term"]}: {result["count"]}</Typography>}/>
+                                                    </ListItem>
+                                                )
+                                            })}
+                                        </List>
+                                    </DataHeader>
+                                )
+                            }
+                        </List>
                             
-
-
-                    {/* {JSON.stringify(product["results"])} // this works */}
                 </DetailDrawer>}
         </React.Fragment>
     )

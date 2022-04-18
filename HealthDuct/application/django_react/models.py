@@ -32,6 +32,9 @@ class Provider(models.Model):
 
         data.update(addtional_info)
         return data
+    
+    def get_full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}"
 
 class MentalProvider(Provider):
     def __init__(self, *args, **kwargs):
@@ -100,9 +103,9 @@ class TreatmentPlan(models.Model):
 
 class TreatmentNotes(models.Model):
     note_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    treatment_plan = models.OneToOneField(TreatmentPlan, on_delete=models.CASCADE, null=True)
+    treatment_plan = models.OneToOneField(TreatmentPlan, on_delete=models.CASCADE)
     m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.RESTRICT, null=True)
-    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.RESTRICT)
+    p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.RESTRICT, null=True)
     contents = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 

@@ -26,6 +26,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "5.0.0",
     "react-transition-group": "^4.4.2",
+    "simple-statistics": "^7.7.5",
     "stream-browserify": "^3.0.0",
     "util": "^0.12.4",
     "web-vitals": "^2.1.4"

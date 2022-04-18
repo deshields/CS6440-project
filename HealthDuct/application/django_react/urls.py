@@ -29,6 +29,10 @@ urlpatterns = [
     path("api/patient/invite/new", views.make_invite),
     path("api/patient/invite/update", views.update_invite),
     path("api/treatment/get", views.get_treatment_plan),
+    path("api/treatment/note/add", views.add_treatment_note),
+    path("api/treatment/note/delete", views.get_treatment_plan),
+    path("api/treatment/note/comment/add", views.add_treatment_note_comment),
+    path("api/treatment/note/comment/delete", views.get_treatment_plan),
     path("api/verify", views.verify),
     path("api/drug/<str:product>", views.get_drug_label),
     re_path(r"^(?:.*)/?$", views.index)
