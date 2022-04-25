@@ -1,5 +1,5 @@
 
-import { IconButton, Typography, Box, Grid, CircularProgress, Tab, Tabs, Divider, Drawer, Collapse, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
+import { IconButton, Typography, Box, Grid, CircularProgress, LinearProgress, Tab, Tabs, Divider, Drawer, Collapse, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import React, { useState } from "react";
@@ -9,6 +9,7 @@ import { Redirect, useHistory, Link } from "react-router-dom";
 import { fetchJSON, postJSON } from "../utils/requests";
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import NewPatientCode from "../components/InviteDoc";
+
 import navs from "../utils/navlinks";
 import { HDTextField } from "../components/CustomInputs";
 import { quantile, interquartileRange } from "simple-statistics"
@@ -29,6 +30,30 @@ const DetailDrawer = styled(Drawer)(({ theme }) => ({
     padding: "50px 0px 0px 10px" 
    }
   }));
+
+  function LinearProgressWithLabel(props) {
+    return (
+      <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+        <Box sx={{ width: '100%', mr: 1 }}>
+        <Typography variant="body2" color="text.secondary">{props.term}</Typography>
+          <LinearProgress variant="determinate" {...props} />
+        </Box>
+        <Box sx={{ minWidth: 35 }}>
+          <Typography variant="body2" color="text.secondary">{props.raw_value}</Typography>
+        </Box>
+      </Box>
+    );
+  }
+  
+  LinearProgressWithLabel.propTypes = {
+    /**
+     * The value of the progress indicator for the determinate and buffer variants.
+     * Value between 0 and 100.
+     */
+    raw_value: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired,
+    term: PropTypes.string.isRequired
+  };
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -167,7 +192,7 @@ DataHeader.defaultProps = {
     const drugList = drugs.split(",")
     function getDrugLabel(drug) {
         fetchJSON(`api/drug/${drug}`).then(data =>{
-            setCurrentProduct({"drug": drug, "results": data["label"]["results"], "counts": data["reaction_counts"]["results"].slice(0, 9)})
+            setCurrentProduct({"drug": drug, "results": data["label"]["results"], "counts": data["reaction_counts"]["results"]})
             setDrawerOpen(true)
         })
     }
@@ -194,36 +219,30 @@ DataHeader.defaultProps = {
     )
   }
 
-  const TreatmentPanel = ({plan, setPlan, author, patientId, value, index}) => { 
+  const TreatmentPanel = ({plan, refreshPlan, author, patientId, value, index}) => { 
     const [note, setNote] = useState("")
     const handleNoteChange = (event) => {
         setNote(event.target.value)
     }
 
-    const handlePlanRefresh = () => {
-        setPlan(null)
-        fetchJSON("api/treatment/get").then(data => {
-            setPlan(data.plan_note)
-        })
-    }
-
-    const handleSubmitNote = () => {
-        data = {
-            "authorId": author.url_id,
-            "authorType": author.provider_type,
-            "patientId": patientId,
-            "note": note,
+    function handleSubmitNote() {
+        let data = {
+            authorId: author.url,
+            authorType: author.provider_type,
+            patientId: patientId,
+            note: note,
         }
-        postJSON("api/treatment/note/add", data).then(response => {
+        console.log(data)
+        postJSON(`api/treatment/note/add`, data).then(response => {
             if(!response.ok){
                 throw Error(response.statusText)
             }
             return response.json()
         }).then(ret_data => {
-            handlePlanRefresh()
+            refreshPlan()
         })
-
     }
+
 
     // send note to back then refresh notes
 
@@ -283,17 +302,21 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
     }, [loadOnce])
     console.log(product)
 
+    const handlePlanRefresh = () => {
+        postJSON(`api/treatment/note`, {patientId: patientUrlId}).then(response => {
+            if(!response.ok){
+                throw Error(response.statusText)
+            }
+            return response.json()
+        }).then(data => {
+            console.log(data)
+            setPatientPlan(data.plan_note)
+        })
+    }
+
     React.useEffect(() => {
         if(isProvider){
-            postJSON(`api/treatment/get`, {patientId: patientUrlId}).then(response => {
-                if(!response.ok){
-                    throw Error(response.statusText)
-                }
-                return response.json()
-            }).then(data => {
-                console.log(data)
-                setPatientPlan(data.plan_note)
-            })
+            handlePlanRefresh()
         }
     }, [isProvider])
 
@@ -354,6 +377,9 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
         return count_dict.filter(c => c.count > lowerLimit && c.count < upperLimit)
     }
 
+    const totalCount = (count_dict_list) => {
+        return count_dict_list.reduce((a, b) => a + (b["count"] || 0), 0)
+    }
 
     return(
         <React.Fragment>
@@ -375,7 +401,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                     </Tabs>
                     <InformationPanel patientData={patientData} editable={editable} value={value} index={0}/>
                     {isProvider && <MedicalDataPanel patientData={patientData} setCurrentProduct={setCurrentProduct} setDrawerOpen={setDrawerOpen} value={value} index={1} />}
-                    {isProvider && <TreatmentPanel plan={patientPlan} setPlan={setPatientPlan} author={loggedInUserData} value={value} index={2} />}
+                    {isProvider && <TreatmentPanel plan={patientPlan} refreshPlan={handlePlanRefresh} author={loggedInUserData} patientId={patientUrlId} value={value} index={2} />}
                 </div>
             </Box>
                 {isProvider && <DetailDrawer
@@ -415,13 +441,13 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                                 )
                             })}
                             {product["counts"] && (
-                                    <DataHeader header={<Typography variant="h4">Surveyed Symptom Count</Typography>}>
-                                        <Typography variant="subtitle1">Top 10 Results</Typography>
+                                    <DataHeader header={<Typography variant="h4">Surveyed Patient Reactions Count</Typography>}>
+                                        <Typography variant="subtitle1">Top 10 terms out of {totalCount(product["counts"])} Reactions</Typography>
                                         <List>
-                                            {product["counts"].map(result => {
+                                            {product["counts"].slice(0, 9).map(result => {
                                                 return(
                                                     <ListItem>
-                                                        <ListItemText primary={<Typography variant="body2">{result["term"]}: {result["count"]}</Typography>}/>
+                                                        <LinearProgressWithLabel value={result.count / product["counts"][0].count} raw_value={result.count} term={result.term}/>
                                                     </ListItem>
                                                 )
                                             })}

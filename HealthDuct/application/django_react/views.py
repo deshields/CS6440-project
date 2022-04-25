@@ -109,7 +109,7 @@ def get_invite(request):
     patient_id = get_object_or_404(mdls.Patient, url_id=patient_url_id)
     invite_code = get_object_or_404(mdls.PatientInviteCode, patient_uuid=patient_id)
     logger.info(invite_code.code)
-    return JsonResponse({"code": invite_code.code})
+    return JsonResponse({"code": invite_code.code, "valid_for": {"mental health": invite_code.valid_for_mp, "primary care": invite_code.valid_for_pcp}})
 
 def update_invite(request):
     body = json.loads(request.body)
@@ -126,6 +126,7 @@ def update_invite(request):
         else:
             item.save()
     return _http201(f"Updated Patient Code")
+
 
 def add_patient(request):
     body = json.loads(request.body)
@@ -191,8 +192,8 @@ def get_treatment_plan(request):
     plan = get_or_none( mdls.TreatmentPlan, assigned_patient=patient_id)
     if plan is None:
         return JsonResponse({"plan_note": []})
-    plan_notes = mdls.TreatmentNotes.filter(note_uuid=plan.plan_uuid)
-    plan_comments = mdls.TreatmentNoteComments.filter(treatment_note__note_uuid=plan.plan_uuid)
+    plan_notes = mdls.TreatmentNotes.objects.filter(note_uuid=plan.plan_uuid)
+    plan_comments = mdls.TreatmentNoteComments.objects.filter(treatment_note__note_uuid=plan.plan_uuid)
 
     notes = [{"note": note.contents, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name(), "timestamp": note.timestamp, "comments": [{"contents": com.contents, "timestamp": com.timestamp, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name() } for com in list(plan_comments.filter(treatment_note=note.note_uuid).values())]} for note in list(plan_notes.values())]
     return JsonResponse({"plan_note": sorted(notes, key=lambda d: d['timestamp'])})
@@ -203,13 +204,14 @@ def add_treatment_note(request):
     patient_id = get_object_or_404(mdls.Patient, url_id=patient_url_id)
     writer = body.get("authorId")
     writer_type = body.get("authorType")
-    treatment_plan = mdls.TreatmentPlan.object.get_or_create(assigned_patient=patient_id)
-    treatment_note = mdls.TreatmentNotes(TreatmentPlan=treatment_plan, contents=body.get("note"))
+    treatment_plan, _ = mdls.TreatmentPlan.objects.get_or_create(assigned_patient=patient_id)
+    treatment_note = mdls.TreatmentNotes(treatment_plan=treatment_plan, contents=body.get("note"))
     if writer_type == "mental":
-        treatment_note.m_author_uuid = writer
+        treatment_note.m_author_uuid = get_object_or_404(mdls.MentalProvider, url_id=writer)
     else:
-        treatment_note.p_author_uuid = writer
+        treatment_note.p_author_uuid = get_object_or_404(mdls.PhysicalProvider, url_id=writer)
     treatment_note.save()
+    return JsonResponse({"note": treatment_note})
 
 def add_treatment_note_comment(request):
     body = json.loads(request.body)
@@ -226,6 +228,7 @@ def add_treatment_note_comment(request):
     else:
         note_comment.p_author_uuid = writer
     note_comment.save()
+    return JsonResponse({"note_comment": note_comment})
 
 def get_drug_label(request, product):
     api = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}"

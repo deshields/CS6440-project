@@ -111,6 +111,9 @@ const AffiliatesStep = ({affiliate, setAffil, institutions, setProviderType, pro
                     <Button variant="outlined" disabled={providerType == "phys"} onClick={() => handleTypeChange("phys")}fullWidth>Physical Health Provider</Button>
                 </Grid>
                 <Grid item xs={12} sm={5}>
+                    <Button variant="outlined" disabled={providerType == "institution"} onClick={() => handleTypeChange("institution")} fullWidth>Institution</Button> 
+                </Grid>
+                <Grid item xs={12} sm={5}>
                     <Button variant="outlined" disabled={providerType == "patient"} onClick={() => handleTypeChange("patient")} fullWidth>Patient</Button> 
                 </Grid>
                 {(providerType == "phys" || providerType == "mental") && <Grid item xs={12}>

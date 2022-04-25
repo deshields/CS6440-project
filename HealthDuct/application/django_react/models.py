@@ -103,7 +103,7 @@ class TreatmentPlan(models.Model):
 
 class TreatmentNotes(models.Model):
     note_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    treatment_plan = models.OneToOneField(TreatmentPlan, on_delete=models.CASCADE)
+    treatment_plan = models.ForeignKey(TreatmentPlan, on_delete=models.CASCADE)
     m_author_uuid = models.ForeignKey(MentalProvider, on_delete=models.RESTRICT, null=True)
     p_author_uuid = models.ForeignKey(PhysicalProvider, on_delete=models.RESTRICT, null=True)
     contents = models.TextField()

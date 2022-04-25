@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 import { postJSON } from '../utils/requests';
 import NextPlanIcon from '@mui/icons-material/NextPlan';
-import { IconButton, Typography, Box, Grid, Tooltip } from "@mui/material";
+import IosShareIcon from '@mui/icons-material/IosShare';
+import { IconButton, Typography, Box, Grid, Link, Tooltip } from "@mui/material";
+import { Redirect } from "react-router-dom";
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
@@ -16,6 +18,9 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+
+import navs from "../utils/navlinks";
+
 
 // Create styles
 const styles = StyleSheet.create({
@@ -65,10 +70,18 @@ const PatientInviteDocument = ({patientData, code}) => {
 
 const NewPatientCode = ({patient}) => {
     const [loading, setLoading] = useState(false)
+    const [loadOnce, setLoadOnce] = useState(null)
     const [code, setCode] = useState(null)
     const [open, setOpen] = React.useState(false);
     const [newMP, setNewMP] = useState(false)
     const [newPCP, setNewPCP] = useState(false)
+    const [docOpen, setDocOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if(code == null){
+            checkExistingInvite()
+        }
+    }, [loadOnce])
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -82,8 +95,32 @@ const NewPatientCode = ({patient}) => {
         setNewMP(event.target.checked)
     }
 
+    const handleDocOpen = () => {
+        setDocOpen(true)
+    }
+
     const handlePCPChange = (event) => {
         setNewPCP(event.target.checked)
+    }
+
+    const checkExistingInvite = () => {
+        postJSON('api/patient/invite/get', {'patientId': patient.url}).then(resp => {
+            if(!resp.ok){
+                setCode(null)
+            }
+            return resp.json()
+        }).then(data => {
+            setLoading(false)
+            setCode(data)
+        })
+    }
+
+    const parseValid = (code_details) => {
+        let valid_string = []
+        Object.keys(code_details["valid_for"]).map(provider => {
+            if(code_details["valid_for"][provider]) valid_string.push(`a new ${provider} provider`)
+        })
+        return valid_string.join(" and ")
     }
     
     const inviting = () => {
@@ -95,10 +132,7 @@ const NewPatientCode = ({patient}) => {
             return resp.json()
         }).then(data => {
             setLoading(false)
-            setCode(data["code"])
-            console.log(data["code"])
-            console.log(data)
-
+            setCode(data)
         })
     }
 
@@ -126,6 +160,7 @@ const NewPatientCode = ({patient}) => {
                         label="New Primary Care Provider"
                     />
                 </FormGroup>
+                {code != null && <Typography>You have an unused code still available. It's valid for {parseValid(code)}. </Typography>}
                 </DialogContent>
                 <DialogActions>
                     <IconButton onClick={() => inviting()}>
@@ -136,30 +171,34 @@ const NewPatientCode = ({patient}) => {
         )
     }
 
+    const openPDF = (url) => {
+        console.log("url")
+        console.log(url)
+        window.open(url, '_blank');
+
+    };
+    
+    
+    const ViewCodeDoc = ({patient, code}) => (
+        <PDFDownloadLink document={<PatientInviteDocument patientData={patient} code={code}/>}>
+          {({ blob, url, loading, error }) => 
+            loading && (code == null || code == undefined) ? 'Loading document...' : <Link onClick={() => openPDF(url)}>Click here to see the document of your current usable code.</Link>
+         }
+        </PDFDownloadLink>
+      )
+    
     return(
         <React.Fragment>
             <Tooltip title={`Invite new provider(s)`}>
                 <IconButton onClick={() => handleClickOpen()}>
-                    <NextPlanIcon/>
+                    <IosShareIcon/>
                 </IconButton>
             </Tooltip>
             <InviteDialog/>
-            {code != null && <ViewCodeDoc patient={patient} code={code}/>}
+            {(code != null && code != undefined) && <ViewCodeDoc patient={patient} code={code["code"]}/>}
         </React.Fragment>
     )
 }
 
-const openPDF = (url) => {
-    window.open(url, '_blank');
-};
-
-
-const ViewCodeDoc = ({patient, code}) => (
-    <PDFDownloadLink document={<PatientInviteDocument patientData={patient} code={code}/>}>
-      {({ blob, url, loading, error }) =>
-        loading ? 'Loading document...' : openPDF(url)
-     }
-    </PDFDownloadLink>
-  )
 
 export default NewPatientCode;
