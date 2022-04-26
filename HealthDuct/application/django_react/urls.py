@@ -30,7 +30,7 @@ urlpatterns = [
     path("api/patient/invite/update", views.update_invite),
     path("api/treatment/note", views.get_treatment_plan),
     path("api/treatment/note/add", views.add_treatment_note),
-    path("api/treatment/note/delete", views.get_treatment_plan),
+    path("api/treatment/note/delete", views.delete_treatment_note),
     path("api/treatment/note/comment", views.get_treatment_plan),
     path("api/treatment/note/comment/add", views.add_treatment_note_comment),
     path("api/treatment/note/comment/delete", views.get_treatment_plan),

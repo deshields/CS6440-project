@@ -14,6 +14,8 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
+from django.forms.models import model_to_dict
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('django')
@@ -190,12 +192,15 @@ def get_treatment_plan(request):
     patient_url_id = body.get("patientId")
     patient_id = get_object_or_404(mdls.Patient, url_id=patient_url_id)
     plan = get_or_none( mdls.TreatmentPlan, assigned_patient=patient_id)
+    print(plan)
     if plan is None:
         return JsonResponse({"plan_note": []})
-    plan_notes = mdls.TreatmentNotes.objects.filter(note_uuid=plan.plan_uuid)
+    plan_notes = mdls.TreatmentNotes.objects.filter(treatment_plan=plan.plan_uuid)
     plan_comments = mdls.TreatmentNoteComments.objects.filter(treatment_note__note_uuid=plan.plan_uuid)
-
-    notes = [{"note": note.contents, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name(), "timestamp": note.timestamp, "comments": [{"contents": com.contents, "timestamp": com.timestamp, "author": (note.m_author_uuid or note.p_author_uuid).get_full_name() } for com in list(plan_comments.filter(treatment_note=note.note_uuid).values())]} for note in list(plan_notes.values())]
+    note_list = list(plan_notes.values())
+    print(note_list)
+    notes = [{"note": note["contents"], "note_id": note["note_uuid"], "author": (get_or_none(mdls.MentalProvider, uid=note["m_author_uuid_id"]) or get_or_none(mdls.PhysicalProvider, uid=note["p_author_uuid_id"])).get_full_name(), "timestamp": note["timestamp"], "comments": [{"contents": com["contents"], "timestamp": com["timestamp"], "author": (get_or_none(mdls.MentalProvider, uid=note["m_author_uuid_id"]) or get_or_none(mdls.PhysicalProvider, uid=note["p_author_uuid_id"])).get_full_name() } for com in list(plan_comments.filter(treatment_note=note["note_uuid"]).values())]} for note in note_list]
+    print(notes)
     return JsonResponse({"plan_note": sorted(notes, key=lambda d: d['timestamp'])})
 
 def add_treatment_note(request):
@@ -211,7 +216,7 @@ def add_treatment_note(request):
     else:
         treatment_note.p_author_uuid = get_object_or_404(mdls.PhysicalProvider, url_id=writer)
     treatment_note.save()
-    return JsonResponse({"note": treatment_note})
+    return JsonResponse({"note": model_to_dict(treatment_note)})
 
 def add_treatment_note_comment(request):
     body = json.loads(request.body)
@@ -229,6 +234,12 @@ def add_treatment_note_comment(request):
         note_comment.p_author_uuid = writer
     note_comment.save()
     return JsonResponse({"note_comment": note_comment})
+
+def delete_treatment_note(request):
+    body = json.loads(request.body)
+    note = body.get("noteId")
+    mdls.TreatmentNotes.objects.filter(note_uuid=note).delete()
+    return _http201("Deleted")
 
 def get_drug_label(request, product):
     api = f"https://api.fda.gov/drug/label.json?api_key={os.environ['FDA_KEY']}&search=products.brand_name.exact={product}"

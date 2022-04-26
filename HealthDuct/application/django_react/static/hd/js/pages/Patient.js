@@ -9,7 +9,7 @@ import { Redirect, useHistory, Link } from "react-router-dom";
 import { fetchJSON, postJSON } from "../utils/requests";
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import NewPatientCode from "../components/InviteDoc";
-
+import DeleteIcon from '@mui/icons-material/Delete';
 import navs from "../utils/navlinks";
 import { HDTextField } from "../components/CustomInputs";
 import { quantile, interquartileRange } from "simple-statistics"
@@ -32,6 +32,7 @@ const DetailDrawer = styled(Drawer)(({ theme }) => ({
   }));
 
   function LinearProgressWithLabel(props) {
+    console.log(props)
     return (
       <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
         <Box sx={{ width: '100%', mr: 1 }}>
@@ -232,7 +233,6 @@ DataHeader.defaultProps = {
             patientId: patientId,
             note: note,
         }
-        console.log(data)
         postJSON(`api/treatment/note/add`, data).then(response => {
             if(!response.ok){
                 throw Error(response.statusText)
@@ -240,11 +240,18 @@ DataHeader.defaultProps = {
             return response.json()
         }).then(ret_data => {
             refreshPlan()
+            setNote("")
         })
     }
 
-
-    // send note to back then refresh notes
+    function handleNoteDelete(note_id){
+        postJSON(`api/treatment/note/delete`, {noteId: note_id}).then(response => {
+            if(!response.ok){
+                throw Error(response.statusText)
+            }
+            refreshPlan()
+        })
+    }
 
     return (
         <TabPanel value={value} index={index}>
@@ -256,25 +263,30 @@ DataHeader.defaultProps = {
                             {plan != null && plan.map(tnote => {
                                 return(
                                     <Grid container direction="column" item>
-                                        <Box sx={{ borderRadius: 16 }}>
+                                        <div style={{ display: "inline-flex", justifyContent: tnote.author == `${author.first_name} ${author.last_name}` ? "right" : "left" }}>
+                                        <Box sx={{ borderRadius: 16, border: "solid", padding: "15px" }}>
                                             <Typography>{tnote.note}</Typography>
                                             <Typography variant="caption">{tnote.timestamp} - {tnote.author}</Typography>
                                             {tnote.comments.map(comment => {
                                                 return(
                                                     <Box>
-                                                        <Typography variant="subtitle1">{comment.contents}</Typography>
-                                                        <Typography variant="caption">{comment.timestamp} - {comment.author}</Typography>
-                                                    </Box>
+                                                            <Typography variant="subtitle1">{comment.contents}</Typography>
+                                                            <Typography variant="caption">{comment.timestamp} - {comment.author}</Typography>
+                                                        </Box>
                                                 )
                                             })}
                                         </Box>
+                                        <IconButton onClick={() => handleNoteDelete(tnote.note_id)}>
+                                                <DeleteIcon/>
+                                        </IconButton>
+                                        </div>
                                     </Grid>
                                 )
                             })}
                         </Grid> 
                     }
                 </Grid>
-                <Grid item justifyContent="space-evenly" alignItems="flex-start" style={{width: "100%"}}>
+                <Grid item justifyContent="space-evenly" alignItems="flex-start" style={{width: "100%", display: "inline-flex"}}>
                         <HDTextField style={{width: "60%"}} multiline variant="outlined" value={note} onChange={handleNoteChange} placeholder="Add new treatment note..."/>
                         <IconButton onClick={() => handleSubmitNote()} disabled={note.length == 0}><Typography variant="overline">Add Treatment Note</Typography></IconButton>
                 </Grid>
