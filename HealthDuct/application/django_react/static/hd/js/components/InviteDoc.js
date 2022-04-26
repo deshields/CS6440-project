@@ -5,6 +5,7 @@ import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-
 import { postJSON } from '../utils/requests';
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import IosShareIcon from '@mui/icons-material/IosShare';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { IconButton, Typography, Box, Grid, Link, Tooltip } from "@mui/material";
 import { Redirect } from "react-router-dom";
 import FormLabel from '@mui/material/FormLabel';
@@ -172,8 +173,6 @@ const NewPatientCode = ({patient}) => {
     }
 
     const openPDF = (url) => {
-        console.log("url")
-        console.log(url)
         window.open(url, '_blank');
 
     };
@@ -182,7 +181,7 @@ const NewPatientCode = ({patient}) => {
     const ViewCodeDoc = ({patient, code}) => (
         <PDFDownloadLink document={<PatientInviteDocument patientData={patient} code={code}/>}>
           {({ blob, url, loading, error }) => 
-            loading && (code == null || code == undefined) ? 'Loading document...' : <Link onClick={() => openPDF(url)}>Click here to see the document of your current usable code.</Link>
+            loading && (code == null || code == undefined) ? 'Loading document...' : <Tooltip title={"Download document with your current usable code."}><IconButton onClick={() => openPDF(url)}><FileDownloadIcon/></IconButton></Tooltip>
          }
         </PDFDownloadLink>
       )

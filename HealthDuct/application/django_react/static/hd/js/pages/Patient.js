@@ -37,7 +37,7 @@ const DetailDrawer = styled(Drawer)(({ theme }) => ({
       <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
         <Box sx={{ width: '100%', mr: 1 }}>
         <Typography variant="body2" color="text.secondary">{props.term}</Typography>
-          <LinearProgress variant="determinate" {...props} />
+          <LinearProgress variant="determinate" value={props.value} color="info"/>
         </Box>
         <Box sx={{ minWidth: 35 }}>
           <Typography variant="body2" color="text.secondary">{props.raw_value}</Typography>
@@ -178,8 +178,8 @@ DataHeader.defaultProps = {
                     <div style={{margin: "2%"}}/>
                     <Grid xs={4} item>
                     <Typography variant="h4">Providers</Typography>
-                        <Typography>Mental health provider? {patientData.provider.mental ? <IconButton component={Link} key={"user"} to={navs.navlink.to.provider(patientData.provider.mental.url)}>{patientData.provider.mental.first_name} {patientData.provider.mental.last_name}</IconButton> : "no"}</Typography>
-                        <Typography>Primary Care Provider? {patientData.provider.phys ? "yes" : "no"}</Typography>
+                        <Typography>Mental health provider? {patientData.provider.mental ? <IconButton component={Link} key={"user"} to={navs.navlink.to.provider(patientData.provider.mental.url)}>{patientData.provider.mental.first_name} {patientData.provider.mental.last_name}</IconButton> : "Unassigned"}</Typography>
+                        <Typography>Primary Care Provider? {patientData.provider.phys ? <IconButton component={Link} key={"user"} to={navs.navlink.to.provider(patientData.provider.phys.url)}>{patientData.provider.phys.first_name} {patientData.provider.phys.last_name}</IconButton> : "Unassigned"}</Typography>
                         {editable && <NewPatientCode patient={patientData}/>}
                 </Grid>
             </Grid>
@@ -276,9 +276,12 @@ DataHeader.defaultProps = {
                                                 )
                                             })}
                                         </Box>
-                                        <IconButton onClick={() => handleNoteDelete(tnote.note_id)}>
-                                                <DeleteIcon/>
-                                        </IconButton>
+                                        {
+                                            tnote.author == `${author.first_name} ${author.last_name}` && <IconButton onClick={() => handleNoteDelete(tnote.note_id)}>
+                                                    <DeleteIcon/>
+                                            </IconButton>
+
+                                        }
                                         </div>
                                     </Grid>
                                 )
@@ -459,7 +462,7 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                                             {product["counts"].slice(0, 9).map(result => {
                                                 return(
                                                     <ListItem>
-                                                        <LinearProgressWithLabel value={result.count / product["counts"][0].count} raw_value={result.count} term={result.term}/>
+                                                        <LinearProgressWithLabel value={Math.round((result.count / product["counts"][0].count) * 100)} raw_value={result.count} term={result.term}/>
                                                     </ListItem>
                                                 )
                                             })}
