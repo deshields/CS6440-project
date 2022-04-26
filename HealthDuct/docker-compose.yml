@@ -8,6 +8,7 @@ services:
       - "15001:8000"
     depends_on:
       - db
+    env_file: .env
     environment:
       - CREATOR=adeshields
       - DJANGO_SETTINGS_MODULE=django_react.settings

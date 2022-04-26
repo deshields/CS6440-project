@@ -10,6 +10,7 @@ import { fetchJSON, postJSON } from "../utils/requests";
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import NewPatientCode from "../components/InviteDoc";
 import DeleteIcon from '@mui/icons-material/Delete';
+
 import navs from "../utils/navlinks";
 import { HDTextField } from "../components/CustomInputs";
 import { quantile, interquartileRange } from "simple-statistics"
@@ -298,7 +299,7 @@ DataHeader.defaultProps = {
     )
   }
 
-const PatientPage = ({ loggedInUserData, patientUrlId }) => {
+const Patient = ({ loggedInUserData, patientUrlId }) => {
     const [value, setValue] = React.useState(0);
     const [patientData, setPatientData] = useState({})
     const [loadOnce, setLoadOnce] = useState(null)
@@ -475,6 +476,10 @@ const PatientPage = ({ loggedInUserData, patientUrlId }) => {
                 </DetailDrawer>}
         </React.Fragment>
     )
+}
+
+const PatientPage = ({ loggedInUserData, patientUrlId }) => {
+    return loggedInUserData != null && loggedInUserData != undefined ? <Patient loggedInUserData={userData} patientUrlId={patientUrlId}/> : <Redirect to={navs.navlink.to.login()}/>;
 }
 
 export default PatientPage;
