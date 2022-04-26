@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-px8^w@4bm7&$1y*&r+kx9nc*q3hrsb_%6161(^z(uy&wb*5k4^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False if os.environ.get("DATABASE_URL") else True
 
-ALLOWED_HOSTS = ["*", "localhost"]
+ALLOWED_HOSTS = ["*", "localhost", "adeshields7-cs6440-project.herokuapp.com"]
 
 
 # Application definition
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic',
     'django_react',
     'rest_framework',
     'corsheaders',
@@ -63,7 +66,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ORIGIN_WHITELIST = [
-     'http://localhost:15001'
+     'http://localhost:15001', 'https://adeshields7-cs6440-project.herokuapp.com'
 ]
 
 # AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend', "django_react.backends.loginBackend.ProviderBackend"]
@@ -119,7 +122,7 @@ DATABASES = {
         'USER': 'postgres',
         'HOST': 'db',
         'PORT': '5432',
-    }
+    } if os.environ.get("DATABASE_URL") is not None else dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
 
@@ -160,6 +163,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIR = [Path(__file__).parent / "static"]
 STATIC_ROOT = BASE_DIR / "static"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

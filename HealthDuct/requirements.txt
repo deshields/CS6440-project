@@ -9,3 +9,4 @@ django-filter
 psycopg2
 markdown
 whitenoise
+dj-database-url
