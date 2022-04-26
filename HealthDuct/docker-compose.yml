@@ -5,7 +5,7 @@ services:
     container_name: healthduct
     build: .
     ports:
-      - "15001:8000"
+      - "15001:${PORT}"
     depends_on:
       - db
     env_file: .env

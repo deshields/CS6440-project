@@ -479,7 +479,7 @@ const Patient = ({ loggedInUserData, patientUrlId }) => {
 }
 
 const PatientPage = ({ loggedInUserData, patientUrlId }) => {
-    return loggedInUserData != null && loggedInUserData != undefined ? <Patient loggedInUserData={userData} patientUrlId={patientUrlId}/> : <Redirect to={navs.navlink.to.login()}/>;
+    return loggedInUserData != null && loggedInUserData != undefined ? <Patient loggedInUserData={loggedInUserData} patientUrlId={patientUrlId}/> : <Redirect to={navs.navlink.to.login()}/>;
 }
 
 export default PatientPage;
