@@ -14,7 +14,7 @@ For local development:
  - Have ports 15001 (front-end), 8000 (backend), and 5432 (database) unused.
 
 #### Steps ####
-Within the `Healthduct` folder:
+Within the `Startup & Config` folder:
 1. Create a `.env` file with an environment variables `FDA_KEY` and `PORT` set. The `FDA_KEY` can be requested from the OpenFDA site: https://open.fda.gov/apis/authentication/. The `PORT` is the port where the python backend will live.
 The .env file will look something like this:
 ```
@@ -24,9 +24,9 @@ PORT=8000
 
 2. Call `docker-compose up -d --build` to (re)build the HealthDuct application.
 3. Perform a `docker exec -it healthduct bash` to go into the container. We now have to migrate the django database to have our tables ready.
+    - Perform a `./manage.py migrate` to import the new tables. If this fails, do the following step then repeat this one. Otherwise, proceed to step 4.
     - Perform a `./manage.py makemigrations django_react` inside the container. _You may have to do this a few times if the next step fails, and I do not know why - I'm sorry for the inconvenience._
-    - Perform a `./manage.py migrate` to import the new tables.
-4. Navigate to `localhost:15001` in a browser of your choice and the application should be up and running.
+4. Type `exit` to leave the container and navigate to `localhost:15001` in a browser of your choice and the application should be up and running.
 If you want to have easy access into the attached Django database, use pgAdmin4 to connect to `localhost:5432`. The username is `postgres`.
 
 ### Using the Application ###
