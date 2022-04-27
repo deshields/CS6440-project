@@ -21,6 +21,7 @@ The .env file will look something like this:
 FDA_KEY=<api_key_here>
 PORT=8000
 ```
+A `.env` will be added to the submission.
 
 2. Call `docker-compose up -d --build` to (re)build the HealthDuct application.
 3. Perform a `docker exec -it healthduct bash` to go into the container. We now have to migrate the django database to have our tables ready.
@@ -35,7 +36,9 @@ Here is the recommended workflow for Healthduct:
 2. Go over to the PATIENTS tab. There won't be any patients in there.
 3. In a separate tab, open the application and sign up with a patient account. Notes on this are in `Final Delivery/Manuals/Patient Manual.md`.
 4. Follow the directions detailed under the `Inviting Providers` section in the Patient Manual.
-5. Go back to the tab with the provider you created in step 1, and insert the consenting code to the input box in under the PATIENTS tab. You should now see your patient/ 
+5. Go back to the tab with the provider you created in step 1, and insert the consenting code to the input box in under the PATIENTS tab. You should now see your patient in the patient list. Click the patient to see their profile.
+6. Providers can see more than what the patient can. You should see a `Medical Data` tab and a `Treatment Plan` tab. Proceed to the Medical Data Tab. Now there should be 3 prescriptions for you to click and explore. Every label returns different headers, so what to explore needs to be discerned by the user.
+7. Proceed to the Treatment Plan tab. You may add details or notes from the perspective of a provider, capable of adding long notes and deleting them.
 
 ### Datasets & Test Data Used ###
 The largest dataset used to assign mock FHIR prescriptions is the Product.csv (stored in  `HealthDuct/application/django_react/data/Products.csv`) provided by OpenFDA here: https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files. Only the Products table was used.
