@@ -32,16 +32,16 @@ If you want to have easy access into the attached Django database, use pgAdmin4 
 
 ### Using the Application ###
 Here is the recommended workflow for Healthduct:
-1. Sign up with a provider account. Notes on this are in `Final Delivery/Manuals/Provider Manual.md`.
+1. Sign up with a provider account. Notes on this are in [https://github.com/deshields/CS6440-project/blob/main/Final%20Delivery/Manuals/Provider%20Manual.md]().
 2. Go over to the PATIENTS tab. There won't be any patients in there.
-3. In a separate tab, open the application and sign up with a patient account. Notes on this are in `Final Delivery/Manuals/Patient Manual.md`.
+3. In a separate tab, open the application and sign up with a patient account. Notes on this are in [https://github.com/deshields/CS6440-project/blob/main/Final%20Delivery/Manuals/Patient%20Manual.md]().
 4. Follow the directions detailed under the `Inviting Providers` section in the Patient Manual.
 5. Go back to the tab with the provider you created in step 1, and insert the consenting code to the input box in under the PATIENTS tab. You should now see your patient in the patient list. Click the patient to see their profile.
 6. Providers can see more than what the patient can. You should see a `Medical Data` tab and a `Treatment Plan` tab. Proceed to the Medical Data Tab. Now there should be 3 prescriptions for you to click and explore. Every label returns different headers, so what to explore needs to be discerned by the user.
 7. Proceed to the Treatment Plan tab. You may add details or notes from the perspective of a provider, capable of adding long notes and deleting them.
 
 ### Datasets & Test Data Used ###
-The largest dataset used to assign mock FHIR prescriptions is the Product.csv (stored in  `HealthDuct/application/django_react/data/Products.csv`) provided by OpenFDA here: https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files. Only the Products table was used.
+The largest dataset used to assign mock FHIR prescriptions is the Product.csv (stored in  [https://github.com/deshields/CS6440-project/blob/main/HealthDuct/application/django_react/data/Products.csv]()) provided by OpenFDA here: https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files. Only the Products table was used.
 
 ### Known Errors ###
 Sometimes the `db` container will refuse to update, and cause a failure with the entire build. In this case, doing a `docker stop db && docker rm db` on the failed `db` container should allow for a clean rebuild.
