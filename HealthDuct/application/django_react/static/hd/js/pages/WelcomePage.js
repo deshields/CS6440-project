@@ -38,6 +38,13 @@ export default function WelcomePage() {
                 <div style={{margin: "10%"}}/>
                 <Button className={classes.button} style={{display: "flex", borderRadius: 25, margin: "2%" }} variant="outlined" component={Link} to={navs.navlink.to.login()}>Login</Button>
                 <Button className={classes.button} style={{display: "flex", borderRadius: 25, margin: "2%" }} variant="outlined" component={Link} to={navs.navlink.to.signup()}>Signup</Button>
+                <Typography 
+                    align="left"
+                    variant="caption"
+                    style={{top:"80%", position: "absolute", opacity: "50%"}}
+                >
+                    * Cookies are not saved in this proof of concept *
+                </Typography>
             </Container>
         </div>
     )

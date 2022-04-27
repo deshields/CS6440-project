@@ -103,7 +103,7 @@ def make_invite(request):
     pcp = True if patient.assigned_physical_provider is None or body.get("newPhys") else False
     invite_code, made = mdls.PatientInviteCode.objects.update_or_create(patient_uuid=patient, defaults={"valid_for_pcp": pcp, "valid_for_mp": mp, "code": get_random_string(length=10)})
     logger.info(invite_code.code)
-    return JsonResponse({"code": invite_code.code})
+    return JsonResponse({"code": invite_code.code, "valid_for": {"mental health": invite_code.valid_for_mp, "primary care": invite_code.valid_for_pcp}})
 
 def get_invite(request):
     body = json.loads(request.body)
@@ -253,7 +253,7 @@ def get_drug_label(request, product):
 
 def _grab_random_meds():
     module_dir = os.path.dirname(__file__)
-    products = pd.read_csv(f"{module_dir}/data/Products.csv", usecols=["DrugName", "Strength"])
+    products = pd.read_csv(f"{module_dir}/data/Products.csv", usecols=["DrugName", "Strength"], dtype=str)
     return products.sample(n = 3)
 
 def _http200():

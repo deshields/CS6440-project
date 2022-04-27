@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 // import { Buffer } from 'buffer';
 // global.Buffer = Buffer
-import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, pdf, usePDF } from '@react-pdf/renderer';
 import { postJSON } from '../utils/requests';
 import NextPlanIcon from '@mui/icons-material/NextPlan';
 import IosShareIcon from '@mui/icons-material/IosShare';
@@ -55,7 +55,6 @@ const patientCode = (patientId) => {
 // Create Document Component
 const PatientInviteDocument = ({patientData, code}) => {
     const get_code = patientCode(patientData.url)
-    console.log(code)
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -134,6 +133,7 @@ const NewPatientCode = ({patient}) => {
         }).then(data => {
             setLoading(false)
             setCode(data)
+            handleClose()
         })
     }
 
@@ -164,7 +164,7 @@ const NewPatientCode = ({patient}) => {
                 {code != null && <Typography>You have an unused code still available. It's valid for {parseValid(code)}. </Typography>}
                 </DialogContent>
                 <DialogActions>
-                    <IconButton onClick={() => inviting()}>
+                    <IconButton onClick={() => inviting()} disabled={!newMP && !newPCP}>
                         <NextPlanIcon/>
                     </IconButton>
                 </DialogActions>
@@ -174,10 +174,9 @@ const NewPatientCode = ({patient}) => {
 
     const openPDF = (url) => {
         window.open(url, '_blank');
-
     };
     
-    
+
     const ViewCodeDoc = ({patient, code}) => (
         <PDFDownloadLink document={<PatientInviteDocument patientData={patient} code={code}/>}>
           {({ blob, url, loading, error }) => 
